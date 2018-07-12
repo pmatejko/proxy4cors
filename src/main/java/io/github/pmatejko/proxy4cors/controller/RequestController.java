@@ -1,29 +1,28 @@
 package io.github.pmatejko.proxy4cors.controller;
 
-import io.github.pmatejko.proxy4cors.model.ErrorHttpResponse;
 import jdk.incubator.http.HttpClient;
-import jdk.incubator.http.HttpHeaders;
 import jdk.incubator.http.HttpRequest;
 import jdk.incubator.http.HttpResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.net.ssl.SSLParameters;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 public class RequestController {
 
     @RequestMapping(path = "/**", produces = MediaType.ALL_VALUE, consumes = MediaType.ALL_VALUE)
-    public HttpResponse<String> proxyRequest(HttpServletRequest servletRequest) {
+    public ResponseEntity<String> proxyRequest(HttpServletRequest servletRequest) {
         try {
             final var headersList = new ArrayList<String>();
             servletRequest.getHeaderNames()
@@ -50,15 +49,15 @@ public class RequestController {
 
             final var siteResponse = HttpClient.newHttpClient()
                     .send(proxyRequest, HttpResponse.BodyHandler.asString());
+            final var siteResponseHeaders = new LinkedMultiValueMap<>(siteResponse.headers().map());
+            final var siteResponseStatus = HttpStatus.valueOf(siteResponse.statusCode());
+            final var siteResponseBody = siteResponse.body();
 
-            siteResponse.headers()
-                    .map()
-                    .forEach((s, strings) -> System.out.print(s + ": " + strings + ", "));
-            return siteResponse;
+            return new ResponseEntity<>(siteResponseBody, siteResponseHeaders, siteResponseStatus);
         } catch (URISyntaxException e) {
-            return new ErrorHttpResponse<>(e.getMessage(), 400);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (IOException | InterruptedException e) {
-            return new ErrorHttpResponse<>(e.getMessage(), 500);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -69,48 +68,8 @@ public class RequestController {
 //    }
 
     @RequestMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public HttpResponse<String> proxyRequest() {
-        return new HttpResponse<>() {
-            @Override
-            public int statusCode() {
-                return 200;
-            }
-
-            @Override
-            public HttpRequest request() {
-                return null;
-            }
-
-            @Override
-            public Optional<HttpResponse<String>> previousResponse() {
-                return Optional.empty();
-            }
-
-            @Override
-            public HttpHeaders headers() {
-                return null;
-            }
-
-            @Override
-            public String body() {
-                return "Hi!";
-            }
-
-            @Override
-            public SSLParameters sslParameters() {
-                return null;
-            }
-
-            @Override
-            public URI uri() {
-                return null;
-            }
-
-            @Override
-            public HttpClient.Version version() {
-                return null;
-            }
-        };
+    public ResponseEntity<String> proxyRequest() {
+        return new ResponseEntity<>("Hi!", HttpStatus.OK);
     }
 
 }
