@@ -101,9 +101,9 @@ public class RequestController {
         return new ResponseEntity<>("<a>https://github.com/pmatejko/proxy4cors</a>", HttpStatus.OK);
     }
 
-    @RequestMapping(path = "/error", produces = MediaType.TEXT_HTML_VALUE)
-    public ResponseEntity<String> errorRequest() {
-        return new ResponseEntity<>("<h1>Error</h1>", HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+//    @RequestMapping(path = "/error", produces = MediaType.TEXT_HTML_VALUE)
+//    public ResponseEntity<String> errorRequest() {
+//        return new ResponseEntity<>("<h1>Error</h1>", HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
 }
