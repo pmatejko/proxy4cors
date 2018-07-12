@@ -88,7 +88,7 @@ public class RequestController {
             LOGGER.info("url: " + requestEntity.getUrl() + ", method: " + requestEntity.getMethod() + ", body: "
                     + requestEntity.getBody() + ", headers: " + headerList);
 
-            final var bodyPublisher = "".equals(requestEntity.getBody())
+            final var bodyPublisher = (requestEntity.getBody() == null || "".equals(requestEntity.getBody()))
                     ? HttpRequest.BodyPublisher.noBody()
                     : HttpRequest.BodyPublisher.fromString(requestEntity.getBody());
             final var proxyRequest = HttpRequest.newBuilder()
