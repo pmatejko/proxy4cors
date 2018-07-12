@@ -5,6 +5,7 @@ import jdk.incubator.http.HttpClient;
 import jdk.incubator.http.HttpHeaders;
 import jdk.incubator.http.HttpRequest;
 import jdk.incubator.http.HttpResponse;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 public class RequestController {
 
-    @RequestMapping(path = "/**")
+    @RequestMapping(path = "/**", produces = MediaType.ALL_VALUE, consumes = MediaType.ALL_VALUE)
     public HttpResponse<String> proxyRequest(HttpServletRequest servletRequest) {
         try {
             final var headersList = new ArrayList<String>();
@@ -67,9 +68,9 @@ public class RequestController {
 //
 //    }
 
-    @RequestMapping(path = "")
+    @RequestMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public HttpResponse<String> proxyRequest() {
-        return new HttpResponse<String>() {
+        return new HttpResponse<>() {
             @Override
             public int statusCode() {
                 return 200;
