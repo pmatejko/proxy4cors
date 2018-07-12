@@ -44,11 +44,10 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
-                    <release>10</release>
-                    <compilerArgs>
-                        <arg>--add-modules</arg>
-                        <arg>jdk.incubator.httpclient</arg>
-                    </compilerArgs>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -62,18 +61,12 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <jvmArguments>--add-modules jdk.incubator.httpclient</jvmArguments>
-                    <mainClass>io.github.pmatejko.proxy4cors.Proxy4CorsApplication</mainClass>
-                </configuration>
+                <version>2.0.3.RELEASE</version>
             </plugin>
 
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
-                <configuration>
-                    <argLine>--add-modules jdk.incubator.httpclient</argLine>
-                </configuration>
             </plugin>
 
             <plugin>

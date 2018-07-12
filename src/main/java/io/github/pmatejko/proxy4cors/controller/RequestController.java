@@ -2,17 +2,20 @@ package io.github.pmatejko.proxy4cors.controller;
 
 import io.github.pmatejko.proxy4cors.model.ErrorHttpResponse;
 import jdk.incubator.http.HttpClient;
+import jdk.incubator.http.HttpHeaders;
 import jdk.incubator.http.HttpRequest;
 import jdk.incubator.http.HttpResponse;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.net.ssl.SSLParameters;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,7 +50,9 @@ public class RequestController {
             final var siteResponse = HttpClient.newHttpClient()
                     .send(proxyRequest, HttpResponse.BodyHandler.asString());
 
-            siteResponse.headers().map().forEach((s, strings) -> System.out.print(s + ": " + strings + ", "));
+            siteResponse.headers()
+                    .map()
+                    .forEach((s, strings) -> System.out.print(s + ": " + strings + ", "));
             return siteResponse;
         } catch (URISyntaxException e) {
             return new ErrorHttpResponse<>(e.getMessage(), 400);
@@ -61,5 +66,50 @@ public class RequestController {
 //    public HttpResponse<String> proxyRequest(@RequestBody MyOwnBodyClass requestBody) {
 //
 //    }
+
+    @RequestMapping(path = "")
+    public HttpResponse<String> proxyRequest() {
+        return new HttpResponse<String>() {
+            @Override
+            public int statusCode() {
+                return 200;
+            }
+
+            @Override
+            public HttpRequest request() {
+                return null;
+            }
+
+            @Override
+            public Optional<HttpResponse<String>> previousResponse() {
+                return Optional.empty();
+            }
+
+            @Override
+            public HttpHeaders headers() {
+                return null;
+            }
+
+            @Override
+            public String body() {
+                return "Hi!";
+            }
+
+            @Override
+            public SSLParameters sslParameters() {
+                return null;
+            }
+
+            @Override
+            public URI uri() {
+                return null;
+            }
+
+            @Override
+            public HttpClient.Version version() {
+                return null;
+            }
+        };
+    }
 
 }
