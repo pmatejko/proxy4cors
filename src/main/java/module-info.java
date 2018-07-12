@@ -6,6 +6,7 @@ module io.github.pmatejko.proxy4cors {
     requires spring.web;
     requires tomcat.embed.core;
     requires jackson.annotations;
+    requires org.apache.logging.log4j;
 
     exports io.github.pmatejko.proxy4cors.controller;
     exports io.github.pmatejko.proxy4cors.model;
