@@ -5,13 +5,15 @@ import jdk.incubator.http.HttpRequest;
 import jdk.incubator.http.HttpResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -21,8 +23,8 @@ import java.util.stream.Collectors;
 @RestController
 public class RequestController {
 
-    @RequestMapping(path = "/**", produces = MediaType.ALL_VALUE, consumes = MediaType.ALL_VALUE)
-    public ResponseEntity<String> proxyRequest(HttpServletRequest servletRequest) {
+    @RequestMapping(path = "/**", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.ALL_VALUE)
+    public ResponseEntity<String> proxyRequest(final HttpServletRequest servletRequest) {
         try {
             final var headersList = new ArrayList<String>();
             servletRequest.getHeaderNames()
@@ -37,7 +39,7 @@ public class RequestController {
                     .lines()
                     .collect(Collectors.joining(System.lineSeparator()));
 
-            final var bodyPublisher = "".equals(body)
+            final var bodyPublisher = (body == null || "".equals(body))
                     ? HttpRequest.BodyPublisher.noBody()
                     : HttpRequest.BodyPublisher.fromString(body);
             final var proxyRequest = HttpRequest.newBuilder()
@@ -56,20 +58,52 @@ public class RequestController {
             return new ResponseEntity<>(siteResponseBody, siteResponseHeaders, siteResponseStatus);
         } catch (URISyntaxException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-// TODO
-//    @RequestMapping(path = "/json", method = RequestMethod.POST)
-//    public HttpResponse<String> proxyRequest(@RequestBody MyOwnBodyClass requestBody) {
-//
-//    }
+    @RequestMapping(path = "/json", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
+            produces = MediaType.ALL_VALUE)
+    public ResponseEntity<String> proxyRequest(@RequestBody RequestEntity<String> requestEntity) {
+        try {
+            final var headerList = new ArrayList<String>();
+            requestEntity.getHeaders()
+                    .forEach((headerName, headerValuesList) -> headerValuesList.forEach(headerValue -> {
+                        headerList.add(headerName);
+                        headerList.add(headerValue);
+                    }));
+
+            final var bodyPublisher = requestEntity.hasBody()
+                    ? HttpRequest.BodyPublisher.fromString(requestEntity.getBody())
+                    : HttpRequest.BodyPublisher.noBody();
+            final var proxyRequest = HttpRequest.newBuilder()
+                    .uri(requestEntity.getUrl())
+                    .headers(headerList.toArray(new String[0]))
+                    .method(requestEntity.getMethod().name(), bodyPublisher)
+                    .timeout(Duration.ofSeconds(15L))
+                    .build();
+
+            final var siteResponse = HttpClient.newHttpClient()
+                    .send(proxyRequest, HttpResponse.BodyHandler.asString());
+            final var siteResponseHeaders = new LinkedMultiValueMap<>(siteResponse.headers().map());
+            final var siteResponseStatus = HttpStatus.valueOf(siteResponse.statusCode());
+            final var siteResponseBody = siteResponse.body();
+
+            return new ResponseEntity<>(siteResponseBody, siteResponseHeaders, siteResponseStatus);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @RequestMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> proxyRequest() {
-        return new ResponseEntity<>("Hi!", HttpStatus.OK);
+        return new ResponseEntity<>("<a>https://github.com/pmatejko/proxy4cors</a>", HttpStatus.OK);
+    }
+
+    @RequestMapping(path = "/error", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> errorRequest() {
+        return new ResponseEntity<>("<h1>Error</h1>", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }
